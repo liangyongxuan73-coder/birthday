@@ -514,8 +514,12 @@ window.VideoStage = (function(){
   var sourceDone = false;
   function attachSource(){
     if (sourceDone) return;
-    sourceDone = true;
     var payloadEl = document.getElementById('rickPayload');
+    if (!payloadEl && document.readyState === 'loading'){
+      setTimeout(attachSource, 30);        // 大文件还在解析，payload 可能还没到，稍后再试
+      return;
+    }
+    sourceDone = true;
     if (payloadEl){
       try {
         var bin = atob(payloadEl.textContent || '');
@@ -523,7 +527,7 @@ window.VideoStage = (function(){
         for (; i < n; i++) buf[i] = bin.charCodeAt(i);
         video.src = URL.createObjectURL(new Blob([buf], { type: 'video/mp4' }));
         return;
-      } catch (e){ sourceDone = false; }
+      } catch (e){ /* 解码失败则退回相对路径 */ }
     }
     video.setAttribute('src', './' + encodeURIComponent(FILE));
   }
@@ -1368,14 +1372,26 @@ window.VideoStage = (function(){
   wrap.addEventListener('touchstart', function(e){ e.preventDefault(); enter(); }, { passive: false });
 
   if (window.PigAudio) {
+    var hintEl = document.getElementById('musicHint');
+    var hideHint = function(){ if (hintEl) hintEl.classList.remove('on'); };
+
+    /* 音乐真正响起来之后，提示自动消失。
+       只监听一次点击不可靠（点击可能发生在提示出现之前），这里持续轮询播放状态 */
+    var hintWatch = setInterval(function(){
+      if (window.PigAudio && !PigAudio.isBlocked() && PigAudio.isPlaying()){
+        hideHint();
+        clearInterval(hintWatch);
+      }
+    }, 300);
+    setTimeout(function(){ clearInterval(hintWatch); }, 20000);
+
     PigAudio.sport();
     setTimeout(function(){ PigAudio.sport(); }, 120);
     setTimeout(function(){ PigAudio.sport(); }, 450);
     setTimeout(function(){
       PigAudio.sport();
       if (PigAudio.isBlocked()){
-        var h = document.getElementById('musicHint');
-        if (h) h.classList.add('on');
+        if (hintEl) hintEl.classList.add('on');
         var wt = document.querySelector('.w-tip');
         if (wt) wt.classList.add('off');
       }
@@ -1385,8 +1401,7 @@ window.VideoStage = (function(){
         PigAudio.resume();
         if (!PigAudio.isPlaying()) PigAudio.sport();
       }
-      var hh = document.getElementById('musicHint');
-      if (hh) hh.classList.remove('on');
+      hideHint();
       document.removeEventListener('touchstart', unlock);
       document.removeEventListener('touchend', unlock);
       document.removeEventListener('click', unlock);
