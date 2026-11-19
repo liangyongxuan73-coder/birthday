@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#000000">
+<meta name="robots" content="noindex,nofollow,noarchive,noimageindex">
 <title>生日快乐</title>
 <style>
 :root{--ink:#efe9dc}
@@ -940,7 +941,7 @@ window.VideoStage = (function(){
       if (!dragging){
         dragRotY += velY;
         dragRotX += velX;
-        velY *= 0.945;
+        velY *= 0.90;
         velX *= 0.90;
         if (Math.abs(velY) < 0.0002) velY = 0;
         if (Math.abs(velX) < 0.0002) velX = 0;
@@ -1093,39 +1094,48 @@ window.VideoStage = (function(){
   }
 
   var pd = null;
+  var DRAG_YAW = 0.0115;     // 水平拖拽灵敏度
+  var DRAG_PITCH = 0.0068;   // 垂直拖拽灵敏度
 
   cv.addEventListener('pointerdown', function(e){
-    pd = { x: e.clientX, y: e.clientY };
+    if (pd) return;                       // 多指时只跟第一根手指
+    pd = { x: e.clientX, y: e.clientY, id: e.pointerId };
     lastPx = e.clientX; lastPy = e.clientY;
     if (state === 'done' || state === 'grow'){
       dragging = true;
       velY = 0; velX = 0;
+      try { cv.setPointerCapture(e.pointerId); } catch (err) {}
     }
   });
 
   cv.addEventListener('pointermove', function(e){
-    if (!pd) return;
-    if (dragging){
-      var dx = e.clientX - lastPx;
-      var dy = e.clientY - lastPy;
-      lastPx = e.clientX; lastPy = e.clientY;
-      dragRotY += dx * 0.0115;
-      dragRotX += dy * 0.0068;
-      dragRotX = clamp(dragRotX, -0.95, 0.95);
-      velY = dx * 0.0115;
-      velX = dy * 0.0068;
-    }
+    if (!pd || e.pointerId !== pd.id || !dragging) return;
+    var dx = e.clientX - lastPx;
+    var dy = e.clientY - lastPy;
+    lastPx = e.clientX; lastPy = e.clientY;
+
+    /* 让球体跟着手指转：往右拖 → 往右转；往下拖 → 往下压 */
+    dragRotY -= dx * DRAG_YAW;
+    dragRotX += dy * DRAG_PITCH;
+    dragRotX = clamp(dragRotX, -0.95, 0.95);
+    velY = -dx * DRAG_YAW * 0.3;   // 松手后只保留很小的惯性，避免转过头
+    velX = dy * DRAG_PITCH * 0.3;
   });
 
   cv.addEventListener('pointerup', function(e){
-    if (!pd) return;
+    if (!pd || e.pointerId !== pd.id) return;
     var moved = Math.abs(e.clientX - pd.x) + Math.abs(e.clientY - pd.y);
     if (moved < 9 && state === 'idle') start();
+    try { cv.releasePointerCapture(e.pointerId); } catch (err) {}
     pd = null;
     dragging = false;
   });
 
-  cv.addEventListener('pointercancel', function(){ pd = null; dragging = false; });
+  cv.addEventListener('pointercancel', function(e){
+    if (pd && e.pointerId !== pd.id) return;
+    pd = null;
+    dragging = false;
+  });
 
   /* ---- 双击（鼠标 / 触屏双击）→ 立刻播片；返回键等控件除外 ---- */
   var tapInfo = { t: 0, x: 0, y: 0 };
