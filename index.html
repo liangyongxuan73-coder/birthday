@@ -1114,12 +1114,11 @@ window.VideoStage = (function(){
     var dy = e.clientY - lastPy;
     lastPx = e.clientX; lastPy = e.clientY;
 
-    /* 让球体跟着手指转：往右拖 → 往右转；往下拖 → 往下压 */
-    dragRotY -= dx * DRAG_YAW;
-    dragRotX += dy * DRAG_PITCH;
+    dragRotY += dx * DRAG_YAW;     // 往右拖 → 猪往右转
+    dragRotX -= dy * DRAG_PITCH;   // 往上托 → 抬头，往下拖 → 低头
     dragRotX = clamp(dragRotX, -0.95, 0.95);
-    velY = -dx * DRAG_YAW * 0.3;   // 松手后只保留很小的惯性，避免转过头
-    velX = dy * DRAG_PITCH * 0.3;
+    velY = dx * DRAG_YAW * 0.3;    // 松手后只保留很小的惯性，避免转过头
+    velX = -dy * DRAG_PITCH * 0.3;
   });
 
   cv.addEventListener('pointerup', function(e){
