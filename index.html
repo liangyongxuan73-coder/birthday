@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -117,7 +117,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
   }
   .music-hint.on{opacity:1}
 
-  /* ===== 全屏整蛊视频层（粒子猪停留 10 秒 / 双击任意处触发） ===== */
+  /* ===== 全屏整蛊视频层（粒子猪停留 20 秒 / 双击任意处触发） ===== */
   #videoStage{
     position:fixed;inset:0;z-index:200;
     background:#000;
@@ -474,7 +474,7 @@ window.PigAudio = (function(){
 <div class="tip" id="tip">点一下</div>
 <div class="back" id="back">返回</div>
 
-<!-- ===== 全屏视频层：粒子猪停留 10 秒 / 双击（返回键除外）→ 自动播放 ===== -->
+<!-- ===== 全屏视频层：粒子猪停留 20 秒 / 双击（返回键除外）→ 自动播放 ===== -->
 <div id="videoStage" aria-hidden="true">
   <video id="rickVideo" playsinline webkit-playsinline x5-playsinline x5-video-player-type="h5" preload="auto"></video>
   <div class="v-close" id="vClose">关闭</div>
@@ -557,7 +557,7 @@ window.VideoStage = (function(){
   });
 
   function play(){
-    if (opened) return;              // 已在播放：双击与 10 秒计时同时到达时不重开
+    if (opened) return;              // 已在播放：双击与 20 秒计时同时到达时不重开
     opened = true;
     stage.classList.add('on');
     stage.setAttribute('aria-hidden', 'false');
@@ -582,7 +582,7 @@ window.VideoStage = (function(){
   }
 
   /* 在用户点击的那一刻用静音 play() 解锁媒体元素，
-     否则 10 秒后没有手势的自动播放会被浏览器拦下（尤其移动端） */
+     否则 20 秒后没有手势的自动播放会被浏览器拦下（尤其移动端） */
   function prime(){
     if (primed || opened) return;
     if (!video.getAttribute('src')) return;   // 视频源还没挂上，等下一次手势
@@ -669,8 +669,8 @@ window.VideoStage = (function(){
   var RISE_DUR = 1.45;
   var TEXT_AT = 2.15;
 
-  /* ---- 粒子猪画面停留 10 秒 → 自动播放；双击（返回键除外）立即播放 ---- */
-  var HOLD_MS = 10000;
+  /* ---- 粒子猪画面停留 20 秒 → 自动播放；双击（返回键除外）立即播放 ---- */
+  var HOLD_MS = 20000;
   var holdTimer = 0;
 
   function cancelHold(){
